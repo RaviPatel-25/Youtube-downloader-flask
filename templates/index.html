@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YouTube Downloader</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+<div class="bg-white shadow-lg rounded-lg p-6 w-full max-w-md">
+    <h1 class="text-2xl font-bold text-center mb-4">YouTube Downloader</h1>
+
+    <input id="url" type="text" placeholder="Paste YouTube URL"
+        class="w-full p-2 border rounded mb-3" oninput="fetchInfo()">
+
+    <div id="thumbnail-container" class="mb-3 hidden">
+        <img id="thumbnail" class="rounded-lg w-full" alt="Thumbnail">
+        <p id="video-title" class="mt-2 text-center font-semibold"></p>
+    </div>
+
+    <div class="mb-3">
+        <label class="font-medium">Format:</label>
+        <div>
+            <label><input type="radio" name="format" value="mp4" checked onchange="toggleQuality()"> Video (.mp4)</label>
+            <label class="ml-4"><input type="radio" name="format" value="mp3" onchange="toggleQuality()"> Audio (.mp3)</label>
+        </div>
+    </div>
+
+    <div id="quality-container" class="mb-3">
+        <label class="font-medium">Quality:</label>
+        <select id="quality" class="w-full p-2 border rounded"></select>
+    </div>
+
+    <button id="download-btn" onclick="downloadVideo()"
+        class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded w-full">
+        Download
+    </button>
+
+    <div id="loading" class="hidden mt-3 text-center text-blue-500 font-semibold">Downloading...</div>
+</div>
+
+<script>
+async function fetchInfo() {
+    const url = document.getElementById('url').value.trim();
+    if (!url) return;
+    try {
+        const res = await fetch('/get_info', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url })
+        });
+        const data = await res.json();
+        if (data.error) return;
+        document.getElementById('thumbnail').src = data.thumbnail;
+        document.getElementById('video-title').textContent = data.title;
+        document.getElementById('thumbnail-container').classList.remove('hidden');
+        const qualitySelect = document.getElementById('quality');
+        qualitySelect.innerHTML = data.streams.map(q => `<option value="${q}" ${q==="360p"?"selected":""}>${q}</option>`).join('');
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+function toggleQuality() {
+    const format = document.querySelector('input[name="format"]:checked').value;
+    document.getElementById('quality-container').style.display = format === 'mp4' ? 'block' : 'none';
+}
+
+function downloadVideo() {
+    const url = document.getElementById('url').value.trim();
+    const format = document.querySelector('input[name="format"]:checked').value;
+    const quality = document.getElementById('quality').value;
+    const downloadBtn = document.getElementById('download-btn');
+    const loading = document.getElementById('loading');
+
+    const formData = new FormData();
+    formData.append('url', url);
+    if (format === 'mp4') formData.append('quality', quality);
+
+    const route = format === 'mp4' ? '/download/mp4' : '/download/mp3';
+
+    downloadBtn.disabled = true;
+    loading.classList.remove('hidden');
+
+    fetch(route, { method: 'POST', body: formData })
+        .then(res => res.blob())
+        .then(blob => {
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = format === 'mp4' ? 'video.mp4' : 'audio.mp3';
+            link.click();
+            alert('Download completed!');
+        })
+        .catch(err => alert('Download failed: ' + err))
+        .finally(() => {
+            downloadBtn.disabled = false;
+            loading.classList.add('hidden');
+        });
+}
+</script>
+</body>
+</html>
