@@ -86,7 +86,10 @@ function downloadMedia() {
   loading.classList.remove('hidden');
 
   fetch(route, { method: 'POST', body: formData })
-    .then(res => res.blob())
+    .then(res => {
+      if (!res.ok) throw new Error("Download failed");
+      return res.blob();
+    })
     .then(blob => {
       const link = document.createElement('a');
       link.href = window.URL.createObjectURL(blob);
