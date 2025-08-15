@@ -45,10 +45,11 @@ async function fetchInfo() {
     if (!url) return;
     try {
         const res = await fetch('/get_info', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url })
-        });
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ url: document.getElementById('url').value })
+  });
+
         const data = await res.json();
         if (data.error) return;
         document.getElementById('thumbnail').src = data.thumbnail;
