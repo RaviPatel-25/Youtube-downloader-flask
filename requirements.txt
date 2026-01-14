@@ -1,4 +1,7 @@
-Flask
+flask
 pytubefix
 gunicorn
 requests
+os
+tempfile
+shutil
