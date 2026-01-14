@@ -2,5 +2,3 @@ flask
 pytubefix
 gunicorn
 requests
-tempfile
-shutil
